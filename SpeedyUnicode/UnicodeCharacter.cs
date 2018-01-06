@@ -19,6 +19,8 @@ namespace SpeedyUnicode
 
         public string Name { get; set; }
         public string Number { get; set; }
+        public DateTime LastSelected { get; set; }
+        public int FilterAccuracy { get; set; }
 
         public override string ToString()
         {
