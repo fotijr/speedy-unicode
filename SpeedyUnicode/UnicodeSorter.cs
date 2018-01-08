@@ -2,7 +2,7 @@
 
 namespace SpeedyUnicode
 {
-    public class UnicodeSorter : IComparer
+    public class  UnicodeSorter : IComparer
     {
         public int Compare(object a, object b)
         {

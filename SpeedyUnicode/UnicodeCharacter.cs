@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SpeedyUnicode
 {
-    public class UnicodeCharacter
+    public class UnicodeCharacter: IComparable<UnicodeCharacter>
     {
         public string Unicode
         {
@@ -26,6 +26,17 @@ namespace SpeedyUnicode
         {
             int uniInt = int.Parse(this.Number, System.Globalization.NumberStyles.HexNumber);
             return char.ConvertFromUtf32(uniInt);
+        }
+
+        public int CompareTo(UnicodeCharacter other)
+        {
+            // if dates equal, fallback to filter accuracy
+            if (this.LastSelected == other.LastSelected)
+            {
+                return this.FilterAccuracy < other.FilterAccuracy ? 0 : 1;
+            }
+
+            return this.LastSelected > other.LastSelected ? 0 : 1;
         }
     }
 }

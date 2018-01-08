@@ -5,14 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SpeedyUnicode"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525" IsVisibleChanged="Window_IsVisibleChanged" WindowStartupLocation="CenterScreen">
+        Title="Speedy Unicode" Height="350" Width="525" IsVisibleChanged="Window_IsVisibleChanged" WindowStartupLocation="CenterScreen">
     <DockPanel Margin="10">
-        <TextBox DockPanel.Dock="Top" Margin="0,0,0,10" Name="SearchText" KeyUp="SearchText_KeyUp" KeyDown="SearchText_KeyDown" TabIndex="0" />
+        <TextBox DockPanel.Dock="Top" Margin="0,0,0,10" Name="SearchText" KeyUp="SearchText_KeyUp" TabIndex="0" PreviewKeyDown="SearchText_KeyDown" />
         <ListView Name="UnicodeListView" PreviewMouseLeftButtonUp="UnicodeListView_PreviewMouseLeftButtonUp" FontSize="16" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Width="100" Header="" DisplayMemberBinding="{Binding Unicode}" />
-                    <GridViewColumn Width="385" Header="Name" DisplayMemberBinding="{Binding Name}" />
+                    <GridViewColumn Width="325" Header="Name" DisplayMemberBinding="{Binding Name}" />
+                    <GridViewColumn Width="60" Header="#" DisplayMemberBinding="{Binding FilterAccuracy}" />
                 </GridView>
             </ListView.View>
         </ListView>

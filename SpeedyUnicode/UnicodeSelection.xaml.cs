@@ -21,8 +21,9 @@ namespace SpeedyUnicode
     /// </summary>
     public partial class UnicodeSelection : Window
     {
-        private string lastSearch;
+        private string lastSearch = "INITIAL";
         private List<UnicodeCharacter> characters = new List<UnicodeCharacter>();
+        private List<UnicodeCharacter> filteredCharacters = new List<UnicodeCharacter>();
         KeyboardHook hook = new KeyboardHook();
 
         public UnicodeSelection()
@@ -52,8 +53,60 @@ namespace SpeedyUnicode
             }
             else
             {
-                CollectionViewSource.GetDefaultView(UnicodeListView.ItemsSource).Refresh();
+                SearchUnicode();
             }
+        }
+
+        private void SearchText_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Up)
+            {
+                e.Handled = true;
+                MoveSelection(-1);
+            }
+            else if (e.Key == Key.Down)
+            {
+                e.Handled = true;
+                MoveSelection(1);
+            }
+        }
+
+        private void SearchUnicode()
+        {
+            var searchTerm = SearchText.Text;
+            if (lastSearch == searchTerm) return;
+            lastSearch = searchTerm;
+
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                filteredCharacters = characters.Where(c => c.LastSelected > DateTime.MinValue).ToList();
+            }
+            else
+            {
+                filteredCharacters = characters.Where(c => c.Name.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0).ToList();
+                foreach (var character in filteredCharacters)
+                {
+                    var remaining = character.Name.ToUpper().Replace(searchTerm.ToUpper(), "");
+                    character.FilterAccuracy = remaining.Length;
+                    if (remaining == "") continue;
+
+                    if (character.Name == "POUTING CAT FACE")
+                    {
+                        Console.WriteLine("Ok");
+                    }
+
+                    if (remaining.IndexOf("  ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        remaining.First() == ' ' ||
+                        remaining.Last() == ' ')
+                    {
+                        // whole word in unicode name matched exact search term
+                        character.FilterAccuracy = 1;
+                    }
+                }
+            }
+            
+            UnicodeListView.ItemsSource = filteredCharacters.OrderByDescending(u => u.LastSelected).ThenBy(u => u.FilterAccuracy);
+            UnicodeListView.SelectedIndex = 0;
         }
 
         private void CopyUnicdoe()
@@ -79,35 +132,6 @@ namespace SpeedyUnicode
             //}).ConfigureAwait(false);
         }
 
-
-        private bool CharacterFilter(object item)
-        {
-            var character = (item as UnicodeCharacter);
-            var searchTerm = SearchText.Text;
-            if (String.IsNullOrEmpty(searchTerm))
-            {
-                return character.LastSelected > DateTime.MinValue;
-            }
-            else
-            {
-                // if (lastSearch == searchTerm) return true;
-                lastSearch = searchTerm;
-                var found = character.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0;
-                if (!found) return false;
-                var remaining = character.Name.Replace(searchTerm, "");
-                character.FilterAccuracy = remaining.Length;
-
-                if (remaining.IndexOf("  ", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    remaining.First() == ' ' ||
-                    remaining.Last() == ' ')
-                {
-                    // whole word in unicode name matched exact search term
-                    character.FilterAccuracy = 1;
-                }
-                return true;
-            }
-        }
-
         private async Task<bool> LoadCharacters()
         {
             using (StreamReader sr = new StreamReader("UnicodeData.txt"))
@@ -130,11 +154,7 @@ namespace SpeedyUnicode
 
                     this.Dispatcher.Invoke(() =>
                     {
-                        UnicodeListView.ItemsSource = characters;
-                        ListCollectionView view = (ListCollectionView)CollectionViewSource.GetDefaultView(UnicodeListView.ItemsSource);
-                        view.Filter = CharacterFilter;
-                        view.CustomSort = new UnicodeSorter();
-                        UnicodeListView.SelectedIndex = 0;
+                        SearchUnicode();
                     });
                 }
                 catch (Exception ex)
@@ -145,22 +165,10 @@ namespace SpeedyUnicode
             }
             return true;
         }
-        
+
         private void UnicodeListView_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             CopyUnicdoe();
-        }
-
-        private void SearchText_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Up)
-            {
-                MoveSelection(-1);
-            }
-            else if (e.Key == Key.Down)
-            {
-                MoveSelection(1);
-            }
         }
 
         private void MoveSelection(int adjustRow)
