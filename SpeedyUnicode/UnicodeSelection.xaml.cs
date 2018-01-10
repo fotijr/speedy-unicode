@@ -185,5 +185,10 @@ namespace SpeedyUnicode
             SearchText.Focus();
             SearchText.SelectAll();
         }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Hide();
+        }
     }
 }

@@ -5,15 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SpeedyUnicode"
         mc:Ignorable="d"
-        Title="Speedy Unicode" Height="350" Width="525" IsVisibleChanged="Window_IsVisibleChanged" WindowStartupLocation="CenterScreen">
-    <DockPanel Margin="10">
-        <TextBox DockPanel.Dock="Top" Margin="0,0,0,10" Name="SearchText" KeyUp="SearchText_KeyUp" TabIndex="0" PreviewKeyDown="SearchText_KeyDown" />
-        <ListView Name="UnicodeListView" PreviewMouseLeftButtonUp="UnicodeListView_PreviewMouseLeftButtonUp" FontSize="16" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        Title="Speedy Unicode" Height="414.513" Width="525" IsVisibleChanged="Window_IsVisibleChanged" WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="NoResize">
+    <DockPanel Margin="10,0,10,10">
+        <DockPanel Margin="0,0,-10,5" DockPanel.Dock="Top" HorizontalAlignment="Right">
+            <Button Name="CloseButton" Background="White" BorderThickness="0" Width="40" Height="25" Click="CloseButton_Click">X</Button>
+        </DockPanel>
+
+        <TextBox DockPanel.Dock="Top" Margin="0,0,0,0" Name="SearchText" KeyUp="SearchText_KeyUp" TabIndex="0" PreviewKeyDown="SearchText_KeyDown" />
+        <ListView Name="UnicodeListView" PreviewMouseLeftButtonUp="UnicodeListView_PreviewMouseLeftButtonUp" FontSize="24" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="0,22,0,0">
+            <ListView.Resources>
+                <Style TargetType="GridViewColumnHeader">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Style>
+            </ListView.Resources>
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Width="100" Header="" DisplayMemberBinding="{Binding Unicode}" />
-                    <GridViewColumn Width="325" Header="Name" DisplayMemberBinding="{Binding Name}" />
-                    <GridViewColumn Width="60" Header="#" DisplayMemberBinding="{Binding FilterAccuracy}" />
+                    <GridViewColumn Width="70" DisplayMemberBinding="{Binding Unicode}" />
+                    <GridViewColumn Width="415" DisplayMemberBinding="{Binding Name}" />
                 </GridView>
             </ListView.View>
         </ListView>
