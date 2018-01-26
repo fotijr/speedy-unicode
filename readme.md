@@ -3,7 +3,9 @@
 
 A Windows app to quickly find unicode characters and copy them to the clipboard for use.
 
+![Speedy Unicode](speedy.png?raw=true "Speedy Unicode")
+
 ## How to Use
 The keyboard shortcut `ctrl` + `shift` + `x` opens Speedy Unicode. Start typing to search all unicode characters. Use the arrow keys and `enter` to select a character, which is then copied to the clipboard.
 
-![Quick unicode on the desktop](speedy.gif?raw=true "Title")
+![Quick unicode on the desktop](speedy.gif?raw=true "Speedy Unicode in action")
