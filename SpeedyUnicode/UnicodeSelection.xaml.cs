@@ -29,11 +29,27 @@ namespace SpeedyUnicode
         public UnicodeSelection()
         {
             InitializeComponent();
-            Task.Run(() => LoadCharacters());
-            hook.KeyPressed += new EventHandler<KeyPressedEventArgs>(SpeedyShortcut_KeyPressed);
-            // register the control + alt + F12 combination as hot key
-            hook.RegisterHotKey(SpeedyUnicode.ModifierKeys.Control | SpeedyUnicode.ModifierKeys.Shift, System.Windows.Forms.Keys.X);
-            SearchText.Focus();
+            try
+            {
+                Task.Run(() => LoadCharacters());
+                hook.KeyPressed += new EventHandler<KeyPressedEventArgs>(SpeedyShortcut_KeyPressed);
+                // register the control + alt + F12 combination as hot key
+                hook.RegisterHotKey(SpeedyUnicode.ModifierKeys.Control | SpeedyUnicode.ModifierKeys.Shift, System.Windows.Forms.Keys.X);
+                SearchText.Focus();
+                TopDock.PreviewMouseLeftButtonDown += (s, e) =>
+                {
+                    if (e.Source is Button) return;
+                    DragMove();
+                };
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("hot key"))
+            {
+                MessageBox.Show("Error registering keyboard shortcut. Do you already have Speedy Unicode running?", "Error Registering Hot Key 😦", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error initializing Speedy Unicode. Please proceed to rage tweet your frustrations.", "Initialization Error 😦", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         void SpeedyShortcut_KeyPressed(object sender, KeyPressedEventArgs e)
@@ -83,14 +99,15 @@ namespace SpeedyUnicode
             }
             else
             {
-                filteredCharacters = characters.Where(c => c.Name.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0).ToList();
+                filteredCharacters = characters.Where(c => c.Name.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                                                           (c.Alias != null && c.Alias.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0)).ToList();
                 foreach (var character in filteredCharacters)
                 {
                     var remaining = character.Name.ToUpper().Replace(searchTerm.ToUpper(), "");
                     character.FilterAccuracy = remaining.Length;
                     if (remaining == "") continue;
 
-                    if (character.Name == "POUTING CAT FACE")
+                    if (character.Name == "shrug")
                     {
                         Console.WriteLine("Ok");
                     }
@@ -99,12 +116,12 @@ namespace SpeedyUnicode
                         remaining.First() == ' ' ||
                         remaining.Last() == ' ')
                     {
-                        // whole word in unicode name matched exact search term
+                        // whole word in Unicode name matched exact search term
                         character.FilterAccuracy = 1;
                     }
                 }
             }
-            
+
             UnicodeListView.ItemsSource = filteredCharacters.OrderByDescending(u => u.LastSelected).ThenBy(u => u.FilterAccuracy);
             UnicodeListView.SelectedIndex = 0;
         }
@@ -114,9 +131,9 @@ namespace SpeedyUnicode
             if (UnicodeListView.SelectedItem == null) return;
             var selected = (UnicodeCharacter)UnicodeListView.SelectedItem;
             selected.LastSelected = DateTime.Now;
-            Clipboard.SetText(selected.ToString());
+            Clipboard.SetText(selected.Value);
             this.Hide();
-            ShowMessage(selected.ToString() + " copied");
+            ShowMessage(selected.Value + " copied");
         }
 
         private void ShowMessage(string message)
@@ -140,17 +157,27 @@ namespace SpeedyUnicode
                 {
                     string line;
                     string[] properties;
+                    string charCode;
+                    int uniInt;
                     while (sr.Peek() >= 0)
                     {
                         line = await sr.ReadLineAsync();
                         properties = line.Split(';');
+                        charCode = properties[0];
+                        uniInt = int.Parse(charCode, System.Globalization.NumberStyles.AllowHexSpecifier);
+
+                        if (properties[2] == "Cs") continue;
+
                         characters.Add(new UnicodeCharacter
                         {
-                            Number = properties[0],
+                            Number = charCode,
                             Name = properties[1],
-                            LastSelected = DateTime.MinValue
+                            LastSelected = DateTime.MinValue,
+                            Value = char.ConvertFromUtf32(uniInt)
                         });
                     }
+
+                    LoadCustomValues();
 
                     this.Dispatcher.Invoke(() =>
                     {
@@ -164,6 +191,29 @@ namespace SpeedyUnicode
 
             }
             return true;
+        }
+
+        /// <summary>
+        /// Load user-defined custom values
+        /// </summary>
+        private void LoadCustomValues()
+        {
+            characters.Add(new UnicodeCharacter
+            {
+                Number = "0",
+                Name = "Shrug",
+                LastSelected = DateTime.MinValue,
+                Value = @"¯\_(ツ)_/¯"
+            });
+
+            characters.Add(new UnicodeCharacter
+            {
+                Number = "0",
+                Name = "Look of Disapproval",
+                Alias = "LOD",
+                LastSelected = DateTime.MinValue,
+                Value = @"ಠ_ಠ"
+            });
         }
 
         private void UnicodeListView_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -186,9 +236,14 @@ namespace SpeedyUnicode
             SearchText.SelectAll();
         }
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        private void HideButton_Click(object sender, RoutedEventArgs e)
         {
             this.Hide();
+        }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }

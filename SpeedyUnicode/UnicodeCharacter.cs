@@ -8,29 +8,33 @@ namespace SpeedyUnicode
 {
     public class UnicodeCharacter: IComparable<UnicodeCharacter>
     {
-        public string Unicode
-        {
-            get
-            {
-                return ToString();
-            }
-            private set { }
-        }
-
+        /// <summary>
+        /// Official Unicode name
+        /// </summary>
         public string Name { get; set; }
-        public string Number { get; set; }
-        public DateTime LastSelected { get; set; }
-        public int FilterAccuracy { get; set; }
 
-        public override string ToString()
-        {
-            int uniInt = int.Parse(this.Number, System.Globalization.NumberStyles.HexNumber);
-            return char.ConvertFromUtf32(uniInt);
-        }
+        /// <summary>
+        /// User defined alias for easier lookup
+        /// </summary>
+        public string Alias { get; set; }
+
+        /// <summary>
+        /// Utf32 code
+        /// </summary>
+        public string Number { get; set; }
+
+        /// <summary>
+        /// Unicode character(s)
+        /// </summary>
+        public string Value { get; set; }
+
+        public DateTime LastSelected { get; set; }
+
+        public int FilterAccuracy { get; set; }
 
         public int CompareTo(UnicodeCharacter other)
         {
-            // if dates equal, fallback to filter accuracy
+            // if dates equal, fall back to filter accuracy
             if (this.LastSelected == other.LastSelected)
             {
                 return this.FilterAccuracy < other.FilterAccuracy ? 0 : 1;
