@@ -55,6 +55,7 @@ namespace SpeedyUnicode
         void SpeedyShortcut_KeyPressed(object sender, KeyPressedEventArgs e)
         {
             this.Show();
+            this.Activate();
         }
 
         private void SearchText_KeyUp(object sender, KeyEventArgs e)

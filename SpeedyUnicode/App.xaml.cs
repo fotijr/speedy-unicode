@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace SpeedyUnicode
@@ -13,5 +8,14 @@ namespace SpeedyUnicode
     /// </summary>
     public partial class App : Application
     {
+        public App()
+        {
+            AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionCatch;
+        }
+
+        static void UnhandledExceptionCatch(object sender, UnhandledExceptionEventArgs e)
+        {
+            MessageBox.Show("Fatal Speedy Unicode Error" + Environment.NewLine + Environment.NewLine + e.ExceptionObject.ToString(), "Fatal Error 💀", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 }
