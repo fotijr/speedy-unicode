@@ -5,7 +5,7 @@ configuration: Release
 #       appveyor_repo_tag: true
 
 artifacts:
-  - path: bin\Release
+  - path:  %APPVEYOR_BUILD_FOLDER%\SpeedyUnicode\bin\Release
     name: Speedy-Unicode
 
 
