@@ -23,7 +23,7 @@
                 </Button.Content>
                 <Button.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="Start Speedy Unicode on computer startup" IsChecked="True"/>
+                        <MenuItem IsEnabled="False" Header="Start Speedy Unicode on computer startup" IsChecked="True"/>
                         <Separator/>
                         <MenuItem Header="Exit" Click="ExitButton_Click"/>
                     </ContextMenu>

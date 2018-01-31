@@ -2,17 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+// using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace SpeedyUnicode
 {
@@ -25,6 +19,7 @@ namespace SpeedyUnicode
         private List<UnicodeCharacter> characters = new List<UnicodeCharacter>();
         private List<UnicodeCharacter> filteredCharacters = new List<UnicodeCharacter>();
         KeyboardHook hook = new KeyboardHook();
+        System.Windows.Forms.NotifyIcon trayIcon = new System.Windows.Forms.NotifyIcon();
 
         public UnicodeSelection()
         {
@@ -32,9 +27,10 @@ namespace SpeedyUnicode
             try
             {
                 Task.Run(() => LoadCharacters());
-                hook.KeyPressed += new EventHandler<KeyPressedEventArgs>(SpeedyShortcut_KeyPressed);
+                CreateTrayIcon();
+                hook.KeyPressed += new EventHandler<KeyPressedEventArgs>(SpeedyShortcut_Engage);
                 // register the control + alt + F12 combination as hot key
-                hook.RegisterHotKey(SpeedyUnicode.ModifierKeys.Control | SpeedyUnicode.ModifierKeys.Shift, System.Windows.Forms.Keys.X);
+                hook.RegisterHotKey(ModifierKeys.Control | ModifierKeys.Shift, System.Windows.Forms.Keys.X);
                 SearchText.Focus();
                 TopDock.PreviewMouseLeftButtonDown += (s, e) =>
                 {
@@ -52,7 +48,23 @@ namespace SpeedyUnicode
             }
         }
 
-        void SpeedyShortcut_KeyPressed(object sender, KeyPressedEventArgs e)
+        private void CreateTrayIcon()
+        {
+            // getting the icon like this to avoid deploying a resource item or folder
+            trayIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            trayIcon.DoubleClick += SpeedyShortcut_Engage;
+            trayIcon.Text = "Speedy Unicode 💨";
+            trayIcon.Visible = true;
+            
+        }
+
+
+        /// <summary>
+        /// Event fires when Speedy Unicode is engaged, whether through the ⌨ shortcut or the system tray icon 💻
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e">Will be a KeyPressedEventArgs type if from the ⌨ shortcut</param>
+        void SpeedyShortcut_Engage(object sender, EventArgs e)
         {
             this.Show();
             this.Activate();
@@ -127,6 +139,10 @@ namespace SpeedyUnicode
             UnicodeListView.SelectedIndex = 0;
         }
 
+
+        /// <summary>
+        /// Copies unicode char(s) to clipboard and clears search box
+        /// </summary>
         private void CopyUnicdoe()
         {
             if (UnicodeListView.SelectedItem == null) return;
@@ -135,6 +151,7 @@ namespace SpeedyUnicode
             Clipboard.SetText(selected.Value);
             this.Hide();
             ShowMessage(selected.Value + " copied");
+            SearchText.Clear();
         }
 
         private void ShowMessage(string message)
