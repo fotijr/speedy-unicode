@@ -116,5 +116,10 @@
   <ItemGroup>
     <Resource Include="speedy.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="my.unicode.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

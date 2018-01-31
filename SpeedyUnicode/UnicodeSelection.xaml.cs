@@ -195,7 +195,7 @@ namespace SpeedyUnicode
                         });
                     }
 
-                    LoadCustomValues();
+                    await LoadCustomValues();
 
                     this.Dispatcher.Invoke(() =>
                     {
@@ -214,24 +214,51 @@ namespace SpeedyUnicode
         /// <summary>
         /// Load user-defined custom values
         /// </summary>
-        private void LoadCustomValues()
+        private async Task LoadCustomValues()
         {
-            characters.Add(new UnicodeCharacter
+            var customCodeFile = "my.unicode.txt";
+            if (!File.Exists(customCodeFile)) return;
+            using (StreamReader sr = new StreamReader(customCodeFile))
             {
-                Number = "0",
-                Name = "Shrug",
-                LastSelected = DateTime.MinValue,
-                Value = @"¯\_(ツ)_/¯"
-            });
+                try
+                {
+                    string line;
+                    string[] properties;
+                    while (sr.Peek() >= 0)
+                    {
+                        line = await sr.ReadLineAsync();
+                        properties = line.Split(';');
+                        var code = properties[0];
+                        var alias = properties[3];
 
-            characters.Add(new UnicodeCharacter
-            {
-                Number = "0",
-                Name = "Look of Disapproval",
-                Alias = "LOD",
-                LastSelected = DateTime.MinValue,
-                Value = @"ಠ_ಠ"
-            });
+                        if (properties.Length < 3) continue;
+                        if (code != "0")
+                        {
+                            // already existing Unicode, so set alias
+                            var existingChar = characters.FirstOrDefault(c => c.Number == code);
+                            if (existingChar != null)
+                            {
+                                existingChar.Alias = alias;
+                            }
+                            continue;
+                        }
+
+                        characters.Add(new UnicodeCharacter
+                        {
+                            Number = code,
+                            Name = properties[1],
+                            LastSelected = DateTime.MinValue,
+                            Value = properties[2],
+                            Alias = alias
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+
+            }
         }
 
         private void UnicodeListView_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
