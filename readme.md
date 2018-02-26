@@ -1,4 +1,3 @@
----
 🚨  **Speedy Unicode is no longer supported.** 
 
 A mere 2 days after Speedy Unicode's first official release, I discovered this functionality already exists in Windows... 🤦
