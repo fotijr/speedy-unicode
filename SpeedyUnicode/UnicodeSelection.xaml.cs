@@ -15,7 +15,7 @@ namespace SpeedyUnicode
     /// </summary>
     public partial class UnicodeSelection : Window
     {
-        private string lastSearch = "INITIAL";
+        private string lastSearch;
         private List<UnicodeCharacter> characters = new List<UnicodeCharacter>();
         private List<UnicodeCharacter> filteredCharacters = new List<UnicodeCharacter>();
         KeyboardHook hook = new KeyboardHook();
@@ -55,7 +55,7 @@ namespace SpeedyUnicode
             trayIcon.DoubleClick += SpeedyShortcut_Engage;
             trayIcon.Text = "Speedy Unicode 💨";
             trayIcon.Visible = true;
-            
+
         }
 
 
@@ -149,9 +149,9 @@ namespace SpeedyUnicode
             var selected = (UnicodeCharacter)UnicodeListView.SelectedItem;
             selected.LastSelected = DateTime.Now;
             Clipboard.SetText(selected.Value);
+            SearchText.Clear();
             this.Hide();
             ShowMessage(selected.Value + " copied");
-            SearchText.Clear();
         }
 
         private void ShowMessage(string message)
@@ -263,7 +263,10 @@ namespace SpeedyUnicode
 
         private void UnicodeListView_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            CopyUnicdoe();
+            if (((FrameworkElement)e.OriginalSource).DataContext is UnicodeCharacter)
+            {
+                CopyUnicdoe();
+            }
         }
 
         private void MoveSelection(int adjustRow)

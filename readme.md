@@ -1,3 +1,12 @@
+---
+🚨  **Speedy Unicode is no longer supported.** 
+A mere 2 days after Speedy Unicode's first official release, I discovered this functionality already exists in Windows... 🤦
+The Windows emoji finder has been in the OS since the Creators update. Try it by focusing in any text area, and pressing `Windows Key` + `;`. Or, `Windows Key` + `.` also works.
+
+Mac also has this functionality with `cmd` + `ctrl` + `space bar`.
+___
+
+
 # Speedy Unicode
 [![Build status](https://ci.appveyor.com/api/projects/status/o8x2kasrnghqn0wk?svg=true)](https://ci.appveyor.com/project/fotijr/speedy-unicode)
 
