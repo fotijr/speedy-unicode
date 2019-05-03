@@ -206,8 +206,11 @@ function showApp() {
     createWindow();
   } else {
     app.show();
+    // toggling visible on all workspaces ensures speedy opens on the active desktop/monitor
+    mainWindow.setVisibleOnAllWorkspaces(true);
     mainWindow.show();
     mainWindow.restore();
+    mainWindow.setVisibleOnAllWorkspaces(false);
     showDockIcon();
   }
 }

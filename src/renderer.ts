@@ -111,14 +111,14 @@ function getFilteredCharacters(searchTerm: string): UnicodeCharacter[] {
             score = (char.name.length - searchTerm.length);
         }
         if (char.alias && nameRegex.test(char.alias)) {
-            // alias matches get an extra minus one so they are weighted over name matches
+            // alias matches get an extra deduction to be weighted over name matches
             score = Math.min(score, ((char.alias.length - searchTerm.length) - 1));
         }
 
         // if score was less than 1000, a match was found
         if (score < 1000) {
             if (char.userDefined) {
-                // user defined chars get an extra minus one to weight them over standard chars
+                // user defined chars get an extra deduction to weight them over standard chars
                 score -= 1;
             }
             const match: ScoredResult = {
