@@ -19,9 +19,10 @@ script:
 
 deploy:
   provider: releases
+  api_key: "GITHUB OAUTH TOKEN"
   file: 
     - release/speedy-unicode*
   skip_cleanup: true
   draft: true
   on:
-    tags: true
+    branch: master
