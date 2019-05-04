@@ -9,7 +9,7 @@
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "start": "npm run build && electron ./src/main.js",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder -mwl"
   },
   "build": {
     "asar": false,
