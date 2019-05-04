@@ -1,0 +1,74 @@
+{
+  "name": "speedy-unicode",
+  "productName": "Speedy Unicode",
+  "version": "0.5.0",
+  "description": "Speedy unicode look ups.",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "lint": "tslint -c tslint.json -p tsconfig.json",
+    "start": "npm run build && electron ./src/main.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "asar": false,
+    "appId": "com.fotijr.speedy-unicode",
+    "artifactName": "${name}-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "buildResources": "resources",
+      "output": "release"
+    },
+    "files": [
+      "./src/**/*",
+      "!./src/assets/**/*.ts"
+    ],
+    "linux": {
+      "category": "Utility;TextTools",
+      "target": [
+        "deb",
+        "tar.gz",
+        "appimage"
+      ]
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "zip",
+        "dmg"
+      ],
+      "darkModeSupport": true
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "nsis": {
+      "artifactName": "${name}-setup-${version}-win.${ext}"
+    }
+  },
+  "main": "src/main.js",
+  "repository": "https://github.com/fotijr/speedy-unicode",
+  "website": "https://github.com/fotijr/speedy-unicode",
+  "keywords": [
+    "Electron",
+    "quick",
+    "start",
+    "tutorial",
+    "demo",
+    "typescript"
+  ],
+  "author": "Dominic Foti Jr <dominic@fotijr.com>",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "4.1.5",
+    "electron-builder": "^20.39.0",
+    "tslint": "^5.15.0",
+    "typescript": "^3.4.3"
+  },
+  "dependencies": {
+    "lighterhtml-plus": "^0.9.2"
+  }
+}

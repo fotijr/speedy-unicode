@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="content-security-policy" content="script-src 'self' 'unsafe-inline'" />
+    <link rel="stylesheet" type="text/css" href="main.css">
+    <link href="assets/Source_Sans_Pro/SourceSansPro-Regular.ttf" rel="stylesheet">
+    <title>Speedy Unicode</title>
+</head>
+
+<body id="edit-character">
+    <h1>Edit</h1>
+    <form id="edit-form">
+        <label>
+            Name
+            <input id="char-name" type="text">
+        </label>
+        <label>
+            Value
+            <input id="char-value" type="text" value="">
+        </label>
+        <label>
+            Alias
+            <input id="char-alias" type="text" value="">
+        </label>
+        <div>
+            <button class="primary" type="submit">Save</button>
+            <button id="cancel" type="button">Cancel</button>
+        </div>
+    </form>
+</body>
+
+<script>
+    require('./edit-character.js')
+</script>
+
+</html>

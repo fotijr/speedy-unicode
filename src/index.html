@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="content-security-policy" content="script-src 'self' 'unsafe-inline'" />
+  <link rel="stylesheet" type="text/css" href="main.css">
+  <link href="assets/Source_Sans_Pro/SourceSansPro-Regular.ttf" rel="stylesheet">
+  <title>Speedy Unicode</title>
+</head>
+
+<body>
+  <div id="top">
+    <input id="search" type="text" placeholder="Search unicode characters" />
+  </div>
+  <div id="char-container"></div>
+  <div id="context-menu">
+    <div id="edit" class="menu-item">Edit</div>
+    <span id="delete-controls">
+      <div class="separator"></div>
+      <div id="delete" class="menu-item">Delete</div>
+    </span>
+  </div>
+</body>
+
+<script>
+  // You can also require other files to run in this process
+  require('./renderer.js')
+</script>
+
+</html>
