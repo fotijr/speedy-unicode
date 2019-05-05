@@ -19,7 +19,8 @@ script:
 
 deploy:
   provider: releases
-  api_key: "GITHUB OAUTH TOKEN"
+  publish: always
+  api_key: GH_TOKEN
   file: 
     - release/speedy-unicode*
   skip_cleanup: true
