@@ -1,4 +1,4 @@
-import { app, remote } from 'electron';
+import { app } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import { UnicodeCharacter } from '../models';
@@ -15,7 +15,7 @@ export class UnicodeStore {
     ];
     constructor() {
         const fileName = 'user-characters.json';
-        const userDataPath = (app || remote.app).getPath('userData');
+        const userDataPath = app.getPath('userData');
         this.userDefinedCharactersPath = path.join(userDataPath, fileName);
     }
 
