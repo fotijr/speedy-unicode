@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - "11"
+  - "16"
 
 os:
   - osx
@@ -26,4 +26,4 @@ deploy:
   skip_cleanup: true
   draft: true
   on:
-    branch: master
+    branch: main
