@@ -1,13 +1,11 @@
-import { ipcRenderer } from 'electron';
-import { html, render } from 'lighterhtml-plus';
-import { editCharacterChannel, saveCharacterChannel } from './constants';
+import { ipcRenderer as icp } from 'electron';
+import { html, render } from 'uhtml';
+import { IcpChannels } from './constants';
 import { ScoredResult, UnicodeCharacter } from './models';
-import { UnicodeStore } from './store/unicode-store';
 
-const unicodeStore = new UnicodeStore();
 const maxResults = 100;
 const searchBox = document.getElementById('search') as HTMLInputElement;
-const contextMenu = document.getElementById('context-menu') as HTMLElement;
+const contextMenu: HTMLElement = document.getElementById('context-menu');
 
 /**
  * Selection made window flashes a confirmation message
@@ -20,60 +18,57 @@ let filteredResults: UnicodeCharacter[] = [];
 let lastSearch = '';
 let selectedRowIndex = 0;
 
-initializeWindow();
+const setFocus = () => {
+    searchBox.focus();
+}
 
-function initializeWindow() {
-    loadCharacters();
+const initializeWindow = () => {
+    // void loadCharacters();
+    icp.send(IcpChannels.loadUnicodes);
     searchBox.addEventListener('keydown', preserveCursorPosition, false);
     searchBox.addEventListener('keypress', preserveCursorPosition, false);
     searchBox.onblur = setFocus;
     setFocus();
 }
 
-function setFocus() {
-    searchBox.focus();
-}
+initializeWindow();
 
 /** Prevent browser from moving cursor to start/end on arrow press */
-function preserveCursorPosition(e: KeyboardEvent) {
-    if (e.keyCode === 38 || e.keyCode === 40) {
+const preserveCursorPosition = (e: KeyboardEvent) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         e.preventDefault();
         return false;
     }
 }
 
 searchBox.onkeydown = (ev: KeyboardEvent) => {
-    if (ev.keyCode === 38) {
-        // up arrow
+    if (ev.key === 'ArrowUp') {
         setSelectedRow(selectedRowIndex - 1);
         return;
     }
-    if (ev.keyCode === 40) {
-        // down arrow
+    if (ev.key === 'ArrowDown') {
         setSelectedRow(selectedRowIndex + 1);
         return;
     }
-    if (ev.keyCode === 27) {
-        // escape key
+    if (ev.key === 'Escape') {
         window.close();
         searchBox.select();
         return;
     }
-    if (ev.keyCode === 13 && filteredResults[selectedRowIndex]) {
-        // enter key
+    if (ev.key === 'Enter' && filteredResults[selectedRowIndex]) {
         const selected = getSelectedUnicode();
-        selectUnicode(selected);
+        void selectUnicode(selected);
         return;
     }
 };
 
-searchBox.onkeyup = async (ev: KeyboardEvent) => {
-    const searchTerm = (ev.srcElement as HTMLInputElement).value;
+searchBox.onkeyup = (ev: KeyboardEvent) => {
+    const searchTerm = (ev.target as HTMLInputElement).value;
     searchUnicodeCharacters(searchTerm);
 };
 
-function getSelectedUnicode(): UnicodeCharacter {
-    return characters.find(c => c.number === filteredResults[selectedRowIndex].number);
+const getSelectedUnicode = (): UnicodeCharacter => {
+    return characters.find(c => c.code === filteredResults[selectedRowIndex].code);
 }
 
 /**
@@ -81,7 +76,7 @@ function getSelectedUnicode(): UnicodeCharacter {
  * @param searchTerm Term to search for
  * @param force If `true`, search will be performed even if it was the same as previous search
  */
-function searchUnicodeCharacters(searchTerm: string, force: boolean = false) {
+const searchUnicodeCharacters = (searchTerm: string, force = false) => {
     if (!force && lastSearch === searchTerm) {
         return;
     }
@@ -94,9 +89,10 @@ function searchUnicodeCharacters(searchTerm: string, force: boolean = false) {
 /**
  * Filter unicode by search term.
  * If search term empty, returns recently used unicode characters.
+ * 
  * @param searchTerm Search term to use (case-insensitive search)
  */
-function getFilteredCharacters(searchTerm: string): UnicodeCharacter[] {
+const getFilteredCharacters = (searchTerm: string) => {
     if (!searchTerm) {
         // if search criteria empty, show recently used characters
         const previouslyUsed = characters.filter(c => c.lastSelected);
@@ -142,7 +138,7 @@ function getFilteredCharacters(searchTerm: string): UnicodeCharacter[] {
 
 document.getElementById('edit').onclick = (event: MouseEvent) => {
     const selectedChar = getSelectedUnicode();
-    ipcRenderer.send(editCharacterChannel, selectedChar);
+    icp.send(IcpChannels.editCharacter, selectedChar);
 };
 
 document.getElementById('delete').onclick = async (event: MouseEvent) => {
@@ -152,30 +148,40 @@ document.getElementById('delete').onclick = async (event: MouseEvent) => {
         // this can happen when second delete attempted before list refreshed
         return;
     }
-    await unicodeStore.deleteUserDefinedCharacter(selectedChar);
-    await loadCharacters();
     // refresh filtered list after character deleted
     searchUnicodeCharacters(searchBox.value, true);
 };
 
-ipcRenderer.on(saveCharacterChannel, async (event: any, editCharacter: UnicodeCharacter) => {
-    await unicodeStore.saveUserDefinedCharacter(editCharacter);
-    loadCharacters();
+icp.on(IcpChannels.unicdoesLoaded, (e, chars: UnicodeCharacter[]) => {
+    characters = chars;
 });
 
-/** Load unicode characters from file */
-function loadCharacters() {
-    return unicodeStore.loadData()
-        .then(c => {
-            characters = c;
-        });
+const rowSelected = async (char: UnicodeCharacter, rowIndex: number) => {
+    setSelectedRow(rowIndex);
+    await selectUnicode(char);
+    setFocus();
 }
 
-function renderCharacters(chars: UnicodeCharacter[]) {
+const showContextMenu = (char: UnicodeCharacter, rowIndex: number, ev: PointerEvent) => {
+    setSelectedRow(rowIndex);
+    if (char.userDefined) {
+        document.getElementById('delete-controls').classList.remove('hide');
+    } else {
+        document.getElementById('delete-controls').classList.add('hide');
+    }
+    contextMenu.style.top = `${ev.y - 15}px`;
+    contextMenu.style.left = `${ev.x - 15}px`;
+    contextMenu.classList.add('show');
+    setTimeout(() => {
+        contextMenu.classList.remove('show');
+    }, 100);
+}
+
+const renderCharacters = (chars: UnicodeCharacter[]) => {
     render(document.getElementById('char-container'), () => html`
     <table>
-        <tbody>${chars.map((c, i) => html`
-            <tr id=${i} onclick=${select} oncontextmenu=${showContextMenu}>
+        <tbody>${chars.map((c, i) => html.for(c, c.code)`
+            <tr id=${i} onclick=${rowSelected(c, i)} oncontextmenu=${showContextMenu.bind(null, c, i)}>
                 <td class="unicode">${c.value}</td>
                 <td>${c.name}</td>
             </tr>
@@ -183,39 +189,9 @@ function renderCharacters(chars: UnicodeCharacter[]) {
         </tbody>
     </table>
     `);
-
-    async function select(e: any) {
-        const trNode: HTMLElement = e.path.find((n: any) => n.nodeName === 'TR');
-        const selectedIndex = parseInt(trNode.id, 10);
-        setSelectedRow(selectedIndex);
-        await selectUnicode(getSelectedUnicode());
-        setFocus();
-    }
-
-    function showContextMenu(event: MouseEvent) {
-        setSelectedRowByMouseEvent(event);
-        const selectedUnicode = getSelectedUnicode();
-        if (selectedUnicode.userDefined) {
-            document.getElementById('delete-controls').classList.remove('hide');
-        } else {
-            document.getElementById('delete-controls').classList.add('hide');
-        }
-        contextMenu.style.top = `${event.y - 15}px`;
-        contextMenu.style.left = `${event.x - 15}px`;
-        contextMenu.classList.add('show');
-        setTimeout(() => {
-            contextMenu.classList.remove('show');
-        }, 100);
-    }
 }
 
-function setSelectedRowByMouseEvent(e: any) {
-    const trNode: HTMLElement = e.path.find((n: any) => n.nodeName === 'TR');
-    const selectedIndex = parseInt(trNode.id, 10);
-    setSelectedRow(selectedIndex);
-}
-
-function setSelectedRow(index: number) {
+const setSelectedRow = (index: number) => {
     if (index < 0 || index >= filteredResults.length) {
         // current selection already at top or bottom, do nothing
         return;
@@ -232,12 +208,12 @@ function setSelectedRow(index: number) {
     });
 }
 
-async function selectUnicode(unicode: UnicodeCharacter) {
+const selectUnicode = async (unicode: UnicodeCharacter): Promise<void> => {
     try {
         unicode.lastSelected = new Date().getTime();
         await navigator.clipboard.writeText(unicode.value);
         if (showSelectionMade) {
-            ipcRenderer.send('selection-made', unicode);
+            icp.send('selection-made', unicode);
         }
         searchBox.value = '';
         window.close();

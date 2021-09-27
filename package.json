@@ -73,6 +73,6 @@
     "typescript": "^4.4.3"
   },
   "dependencies": {
-    "lighterhtml-plus": "^4.1.0"
+    "uhtml": "^2.7.6"
   }
 }

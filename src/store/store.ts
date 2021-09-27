@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { StoreData } from '../models';
 
-class Store {
+export class Store {
     private data: StoreData;
     private path: string;
 
@@ -18,6 +18,6 @@ class Store {
     }
 
     private loadData(file: string): StoreData {
-        return JSON.parse(fs.readFileSync(file, 'utf-8') as string);
+        return JSON.parse(fs.readFileSync(file, 'utf-8')) as StoreData;
     }
 }

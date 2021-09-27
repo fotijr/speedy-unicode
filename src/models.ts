@@ -1,7 +1,7 @@
 export interface UnicodeCharacter {
     name: string;
     alias?: string;
-    number: string;
+    code: string;
     value: string;
     /** Last used time in epoch time */
     lastSelected: number;

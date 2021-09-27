@@ -70,7 +70,12 @@ module.exports = {
         "@typescript-eslint/no-empty-function": "error",
         "@typescript-eslint/no-empty-interface": "error",
         "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-misused-new": "error",
+        "@typescript-eslint/no-misused-new": [
+            "error",
+            {
+                "checksVoidReturn": true
+            }
+        ],
         "@typescript-eslint/no-namespace": "error",
         "@typescript-eslint/no-parameter-properties": "off",
         "@typescript-eslint/no-shadow": [
@@ -87,7 +92,8 @@ module.exports = {
         "@typescript-eslint/prefer-namespace-keyword": "error",
         "@typescript-eslint/quotes": [
             "error",
-            "single"
+            "single",
+            { "allowTemplateLiterals": true }
         ],
         "@typescript-eslint/triple-slash-reference": [
             "error",
@@ -167,7 +173,6 @@ module.exports = {
         ],
         "prefer-arrow/prefer-arrow-functions": "error",
         "prefer-const": "error",
-        "quotes": ["error", "single"],
         "radix": "error",
         "spaced-comment": [
             "error",

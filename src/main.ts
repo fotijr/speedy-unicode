@@ -1,8 +1,10 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, MenuItemConstructorOptions, shell, Tray } from 'electron';
+import { app, BrowserWindow, globalShortcut, ipcMain, Menu, shell, Tray, ipcMain as icp } from 'electron';
 import * as path from 'path';
-import { editCharacterChannel, saveCharacterChannel } from './constants';
+import { IcpChannels } from './constants';
 import { UnicodeCharacter } from './models';
+import { UnicodeStore } from './store/unicode-store';
 
+const unicodeStore = new UnicodeStore();
 const isMac = (process.platform === 'darwin');
 
 /**
@@ -16,32 +18,51 @@ let selectionMadeWindow: Electron.BrowserWindow;
 let tray: Tray;
 let quitting = false;
 
-function createWindow() {
+const webPreferences = {
+  nodeIntegration: true, // Changed 
+  enableRemoteModule: true,
+  contextIsolation: false, // Changed
+};
+
+const loadUnicode = async () => {
+  const characters = await unicodeStore.loadData();
+  mainWindow.webContents.send(IcpChannels.unicdoesLoaded, characters);
+};
+
+icp.on(IcpChannels.loadUnicodes, () => {
+  void loadUnicode();
+});
+
+
+icp.on(IcpChannels.saveCharacter, async (event: any, editCharacter: UnicodeCharacter) => {
+  await unicodeStore.saveUserDefinedCharacter(editCharacter);
+  void loadUnicode();
+});
+
+const createWindow = () => {
   if (showSelectionMade) {
     selectionMadeWindow = new BrowserWindow({
+      webPreferences,
       frame: false,
       height: 250,
       show: false,
       transparent: true,
-      webPreferences: {
-        nodeIntegration: true
-      },
       width: 500
     });
-    selectionMadeWindow.loadFile(path.join(__dirname, 'selection-made.html'));
+    void selectionMadeWindow.loadFile(path.join(__dirname, 'selection-made.html'));
   }
 
   mainWindow = new BrowserWindow({
+    webPreferences,
     frame: false,
     height: 400,
     icon: path.join(__dirname, 'assets', 'speedy.ico'),
-    webPreferences: {
-      nodeIntegration: true
-    },
     width: 500
   });
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
-  // mainWindow.webContents.openDevTools();
+  void mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  mainWindow.webContents.openDevTools();
+
+  void loadUnicode();
 
   mainWindow.on('close', event => {
     try {
@@ -73,7 +94,7 @@ function createWindow() {
   });
 }
 
-function createAppMenu() {
+const createAppMenu = () => {
   const template = [
     ...(isMac ? [{
       label: app.getName(),
@@ -105,7 +126,7 @@ function createAppMenu() {
       submenu: [
         {
           label: 'Learn More',
-          click() { shell.openExternal('https://github.com/fotijr/speedy-unicode'); }
+          click: () => { void shell.openExternal('https://github.com/fotijr/speedy-unicode'); }
         }
       ]
     }
@@ -115,42 +136,40 @@ function createAppMenu() {
   Menu.setApplicationMenu(menu);
 }
 
-function createEditWindow(): Electron.BrowserWindow {
+const createEditWindow: () => Electron.BrowserWindow = () => {
   const editCharacterWindow = new BrowserWindow({
+    webPreferences,
     frame: true,
     height: 400,
     modal: true,
     show: false,
     title: 'Edit Character',
-    webPreferences: {
-      nodeIntegration: true
-    },
     width: 375
   });
-  editCharacterWindow.loadFile(path.join(__dirname, 'edit-character.html'));
-  // editCharacterWindow.webContents.openDevTools();
+  void editCharacterWindow.loadFile(path.join(__dirname, 'edit-character.html'));
+  editCharacterWindow.webContents.openDevTools();
   return editCharacterWindow;
 }
 
-function editCharacter(character: UnicodeCharacter) {
+const editCharacter = (character: UnicodeCharacter) => {
   const editWindow = createEditWindow();
   editWindow.webContents.once('dom-ready', () => {
-    editWindow.webContents.send(editCharacterChannel, character);
+    editWindow.webContents.send(IcpChannels.editCharacter, character);
     editWindow.show();
     showDockIcon();
   });
 }
 
-function addCharacter() {
-  editCharacter({ name: '', value: '', number: '', lastSelected: 0, userDefined: true });
+const addCharacter = () => {
+  editCharacter({ name: '', value: '', code: '', lastSelected: 0, userDefined: true });
 }
 
-ipcMain.on(editCharacterChannel, (event: any, character: UnicodeCharacter) => {
+ipcMain.on(IcpChannels.editCharacter, (event: any, character: UnicodeCharacter) => {
   editCharacter(character);
 });
 
-ipcMain.on(saveCharacterChannel, (event: any, selection: UnicodeCharacter) => {
-  mainWindow.webContents.send(saveCharacterChannel, selection);
+ipcMain.on(IcpChannels.saveCharacter, (event: any, selection: UnicodeCharacter) => {
+  mainWindow.webContents.send(IcpChannels.saveCharacter, selection);
 });
 
 if (showSelectionMade) {
@@ -164,7 +183,7 @@ if (showSelectionMade) {
   });
 }
 
-function createTrayIcon() {
+const createTrayIcon = () => {
   try {
     tray = new Tray(path.join(__dirname, 'assets', 'speedy-22.png'));
     const exitText = (isMac) ? 'Quit' : 'Exit';
@@ -195,17 +214,17 @@ app.on('window-all-closed', () => {
   }
 });
 
-function showDockIcon() {
+const showDockIcon = () => {
   if (isMac) {
-    app.dock.show();
+    void app.dock.show();
   }
 }
 
-function showApp() {
+const showApp = () => {
   if (mainWindow === null) {
     createWindow();
   } else {
-    app.show();
+    // app.show();
     // toggling visible on all workspaces ensures speedy opens on the active desktop/monitor
     mainWindow.setVisibleOnAllWorkspaces(true);
     mainWindow.show();
