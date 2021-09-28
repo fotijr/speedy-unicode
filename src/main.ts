@@ -23,7 +23,7 @@ const isMac = process.platform === 'darwin';
  */
 const showSelectionMade = false;
 
-const showDevTools = false;
+const showDevTools = true;
 
 let mainWindow: Electron.BrowserWindow;
 let selectionMadeWindow: Electron.BrowserWindow;

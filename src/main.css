@@ -21,7 +21,7 @@ div {
 }
 
 #char-container {
-    height: calc(100vh - 4em);
+    max-height: calc(100vh - 4em);
     overflow-y: auto;
     overflow-x: hidden;
 }
