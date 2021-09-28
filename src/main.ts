@@ -1,11 +1,21 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, shell, Tray, ipcMain as icp } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  globalShortcut,
+  ipcMain,
+  Menu,
+  shell,
+  Tray,
+  ipcMain as icp,
+  screen,
+} from 'electron';
 import * as path from 'path';
 import { IcpChannels } from './constants';
 import { UnicodeCharacter } from './models';
 import { UnicodeStore } from './store/unicode-store';
 
 const unicodeStore = new UnicodeStore();
-const isMac = (process.platform === 'darwin');
+const isMac = process.platform === 'darwin';
 
 /**
  * Selection made window flashes a confirmation message
@@ -13,13 +23,15 @@ const isMac = (process.platform === 'darwin');
  */
 const showSelectionMade = false;
 
+const showDevTools = false;
+
 let mainWindow: Electron.BrowserWindow;
 let selectionMadeWindow: Electron.BrowserWindow;
 let tray: Tray;
 let quitting = false;
 
 const webPreferences = {
-  nodeIntegration: true, // Changed 
+  nodeIntegration: true, // Changed
   enableRemoteModule: true,
   contextIsolation: false, // Changed
 };
@@ -33,11 +45,13 @@ icp.on(IcpChannels.loadUnicodes, () => {
   void loadUnicode();
 });
 
-
-icp.on(IcpChannels.saveCharacter, async (event: any, editCharacter: UnicodeCharacter) => {
-  await unicodeStore.saveUserDefinedCharacter(editCharacter);
-  void loadUnicode();
-});
+icp.on(
+  IcpChannels.saveCharacter,
+  async (event: any, editCharacter: UnicodeCharacter) => {
+    await unicodeStore.saveUserDefinedCharacter(editCharacter);
+    void loadUnicode();
+  }
+);
 
 const createWindow = () => {
   if (showSelectionMade) {
@@ -47,24 +61,35 @@ const createWindow = () => {
       height: 250,
       show: false,
       transparent: true,
-      width: 500
+      width: 500,
     });
-    void selectionMadeWindow.loadFile(path.join(__dirname, 'selection-made.html'));
+    void selectionMadeWindow.loadFile(
+      path.join(__dirname, 'selection-made.html')
+    );
   }
 
   mainWindow = new BrowserWindow({
     webPreferences,
     frame: false,
-    height: 400,
+    height: 500,
     icon: path.join(__dirname, 'assets', 'speedy.ico'),
-    width: 500
+    width: 800,
   });
   void mainWindow.loadFile(path.join(__dirname, 'index.html'));
-  mainWindow.webContents.openDevTools();
+  if (showDevTools) {
+    mainWindow.webContents.openDevTools();
+  }
+  const mainPosition = mainWindow.getBounds();
+  const activeScreen = screen.getDisplayNearestPoint({
+    x: mainPosition.x,
+    y: mainPosition.y,
+  });
+  mainWindow.setSize(
+    Math.min(activeScreen.bounds.width * 0.8, 1000),
+    Math.min(activeScreen.bounds.height * 0.8, 500)
+  );
 
-  void loadUnicode();
-
-  mainWindow.on('close', event => {
+  mainWindow.on('close', (event) => {
     try {
       if (quitting) {
         mainWindow = null;
@@ -92,49 +117,53 @@ const createWindow = () => {
       console.error(error);
     }
   });
-}
+};
 
 const createAppMenu = () => {
   const template = [
-    ...(isMac ? [{
-      label: app.getName(),
-      submenu: [
-        { role: 'about' },
-        { type: 'separator' },
-        { role: 'hide' },
-        { role: 'unhide' },
-        { type: 'separator' },
-        { role: 'quit' }
-      ]
-    }] : []),
+    ...(isMac
+      ? [
+          {
+            label: app.getName(),
+            submenu: [
+              { role: 'about' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' },
+            ],
+          },
+        ]
+      : []),
     {
       label: 'File',
-      submenu: [
-        isMac ? { role: 'close' } : { role: 'quit' }
-      ]
+      submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
     },
     {
       label: 'Window',
       submenu: [
         { role: 'forcereload', label: 'Refresh' },
         { role: 'minimize' },
-        { role: 'close' }
-      ]
+        { role: 'close' },
+      ],
     },
     {
       role: 'help',
       submenu: [
         {
           label: 'Learn More',
-          click: () => { void shell.openExternal('https://github.com/fotijr/speedy-unicode'); }
-        }
-      ]
-    }
+          click: () => {
+            void shell.openExternal('https://github.com/fotijr/speedy-unicode');
+          },
+        },
+      ],
+    },
   ];
 
   const menu = Menu.buildFromTemplate(template as any);
   Menu.setApplicationMenu(menu);
-}
+};
 
 const createEditWindow: () => Electron.BrowserWindow = () => {
   const editCharacterWindow = new BrowserWindow({
@@ -144,12 +173,16 @@ const createEditWindow: () => Electron.BrowserWindow = () => {
     modal: true,
     show: false,
     title: 'Edit Character',
-    width: 375
+    width: 375,
   });
-  void editCharacterWindow.loadFile(path.join(__dirname, 'edit-character.html'));
-  editCharacterWindow.webContents.openDevTools();
+  void editCharacterWindow.loadFile(
+    path.join(__dirname, 'edit-character.html')
+  );
+  if (showDevTools) {
+    editCharacterWindow.webContents.openDevTools();
+  }
   return editCharacterWindow;
-}
+};
 
 const editCharacter = (character: UnicodeCharacter) => {
   const editWindow = createEditWindow();
@@ -158,19 +191,31 @@ const editCharacter = (character: UnicodeCharacter) => {
     editWindow.show();
     showDockIcon();
   });
-}
+};
 
 const addCharacter = () => {
-  editCharacter({ name: '', value: '', code: '', lastSelected: 0, userDefined: true });
-}
+  editCharacter({
+    name: '',
+    value: '',
+    code: '',
+    lastSelected: 0,
+    userDefined: true,
+  });
+};
 
-ipcMain.on(IcpChannels.editCharacter, (event: any, character: UnicodeCharacter) => {
-  editCharacter(character);
-});
+ipcMain.on(
+  IcpChannels.editCharacter,
+  (event: any, character: UnicodeCharacter) => {
+    editCharacter(character);
+  }
+);
 
-ipcMain.on(IcpChannels.saveCharacter, (event: any, selection: UnicodeCharacter) => {
-  mainWindow.webContents.send(IcpChannels.saveCharacter, selection);
-});
+ipcMain.on(
+  IcpChannels.saveCharacter,
+  (event: any, selection: UnicodeCharacter) => {
+    mainWindow.webContents.send(IcpChannels.saveCharacter, selection);
+  }
+);
 
 if (showSelectionMade) {
   ipcMain.on('selection-made', (event: any, selection: UnicodeCharacter) => {
@@ -186,11 +231,11 @@ if (showSelectionMade) {
 const createTrayIcon = () => {
   try {
     tray = new Tray(path.join(__dirname, 'assets', 'speedy-22.png'));
-    const exitText = (isMac) ? 'Quit' : 'Exit';
+    const exitText = isMac ? 'Quit' : 'Exit';
     const contextMenu = Menu.buildFromTemplate([
       { label: 'Show Speedy Unicode', type: 'normal', click: showApp },
       { label: 'Add custom character', type: 'normal', click: addCharacter },
-      { label: exitText, type: 'normal', click: () => app.quit() }
+      { label: exitText, type: 'normal', click: () => app.quit() },
     ]);
     tray.setToolTip('Speedy Unicode');
     tray.setContextMenu(contextMenu);
@@ -198,7 +243,7 @@ const createTrayIcon = () => {
   } catch (error) {
     console.error('Error setting up tray icon', error);
   }
-}
+};
 
 app.on('ready', () => {
   createWindow();
@@ -218,13 +263,12 @@ const showDockIcon = () => {
   if (isMac) {
     void app.dock.show();
   }
-}
+};
 
 const showApp = () => {
   if (mainWindow === null) {
     createWindow();
   } else {
-    // app.show();
     // toggling visible on all workspaces ensures speedy opens on the active desktop/monitor
     mainWindow.setVisibleOnAllWorkspaces(true);
     mainWindow.show();
@@ -232,6 +276,6 @@ const showApp = () => {
     mainWindow.setVisibleOnAllWorkspaces(false);
     showDockIcon();
   }
-}
+};
 
 app.on('activate', showApp);

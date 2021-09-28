@@ -82,7 +82,8 @@ const searchUnicodeCharacters = (searchTerm: string, force = false) => {
     }
     filteredResults = getFilteredCharacters(searchTerm);
     renderCharacters(filteredResults);
-    setSelectedRow(selectedRowIndex);
+
+    setSelectedRow(0);
     lastSearch = searchTerm;
 }
 
@@ -181,7 +182,7 @@ const renderCharacters = (chars: UnicodeCharacter[]) => {
     render(document.getElementById('char-container'), () => html`
     <table>
         <tbody>${chars.map((c, i) => html.for(c, c.code)`
-            <tr id=${i} onclick=${rowSelected(c, i)} oncontextmenu=${showContextMenu.bind(null, c, i)}>
+            <tr id=${i} onclick=${() => rowSelected(c, i)} oncontextmenu=${showContextMenu.bind(null, c, i)}>
                 <td class="unicode">${c.value}</td>
                 <td>${c.name}</td>
             </tr>
@@ -191,6 +192,10 @@ const renderCharacters = (chars: UnicodeCharacter[]) => {
     `);
 }
 
+/**
+ * Visually stylize table row as selected
+ * @param index Row index in table
+ */
 const setSelectedRow = (index: number) => {
     if (index < 0 || index >= filteredResults.length) {
         // current selection already at top or bottom, do nothing
@@ -204,7 +209,7 @@ const setSelectedRow = (index: number) => {
     const selectedRow = document.getElementById(index.toString());
     selectedRow.classList.add('selected');
     selectedRow.scrollIntoView({
-        behavior: 'smooth'
+        block: 'center'
     });
 }
 

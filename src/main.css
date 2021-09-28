@@ -22,17 +22,14 @@ div {
 
 #char-container {
     height: calc(100vh - 4em);
-    width: 80vw;
     overflow-y: auto;
     overflow-x: hidden;
-    max-width: 1000px;
 }
 
 input {
     box-sizing: border-box;
     font-size: 1em;
     padding: 0.2em 0.5em;
-    font-family: 'Source Sans Pro', sans-serif;
 }
 
 #search {
@@ -42,7 +39,6 @@ input {
 
 table {
     width: 100%;
-    /* height: 200px; */
     border-collapse: collapse;
     overflow-y: auto;
     overflow-x: hidden;
@@ -159,7 +155,6 @@ button {
     background-color: aliceblue;
     margin: 0.5em;
     font-size: 1em;
-    font-family: 'Source Sans Pro', sans-serif;
 }
 
 button.primary {
