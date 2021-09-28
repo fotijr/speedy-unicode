@@ -141,6 +141,10 @@ const createAppMenu = () => {
       submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
     },
     {
+      label: 'Edit',
+      submenu: [{ role: 'cut' }, { role: 'copy' }, { role: 'paste' }],
+    },
+    {
       label: 'Window',
       submenu: [
         { role: 'forcereload', label: 'Refresh' },
