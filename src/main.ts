@@ -31,8 +31,8 @@ let tray: Tray;
 let quitting = false;
 
 const webPreferences = {
-  nodeIntegration: true, // Changed
-  enableRemoteModule: true,
+  nodeIntegration: true,
+  enableRemoteModule: false,
   contextIsolation: false, // Changed
 };
 
