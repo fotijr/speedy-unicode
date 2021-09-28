@@ -1,9 +1,21 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, MenuItemConstructorOptions, shell, Tray } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  globalShortcut,
+  ipcMain,
+  Menu,
+  shell,
+  Tray,
+  ipcMain as icp,
+  screen,
+} from 'electron';
 import * as path from 'path';
-import { editCharacterChannel, saveCharacterChannel } from './constants';
+import { IcpChannels } from './constants';
 import { UnicodeCharacter } from './models';
+import { UnicodeStore } from './store/unicode-store';
 
-const isMac = (process.platform === 'darwin');
+const unicodeStore = new UnicodeStore();
+const isMac = process.platform === 'darwin';
 
 /**
  * Selection made window flashes a confirmation message
@@ -11,39 +23,73 @@ const isMac = (process.platform === 'darwin');
  */
 const showSelectionMade = false;
 
+const showDevTools = false;
+
 let mainWindow: Electron.BrowserWindow;
 let selectionMadeWindow: Electron.BrowserWindow;
 let tray: Tray;
 let quitting = false;
 
-function createWindow() {
+const webPreferences = {
+  nodeIntegration: true,
+  enableRemoteModule: false,
+  contextIsolation: false, // Changed
+};
+
+const loadUnicode = async () => {
+  const characters = await unicodeStore.loadData();
+  mainWindow.webContents.send(IcpChannels.unicdoesLoaded, characters);
+};
+
+icp.on(IcpChannels.loadUnicodes, () => {
+  void loadUnicode();
+});
+
+icp.on(
+  IcpChannels.saveCharacter,
+  async (event: any, editCharacter: UnicodeCharacter) => {
+    await unicodeStore.saveUserDefinedCharacter(editCharacter);
+    void loadUnicode();
+  }
+);
+
+const createWindow = () => {
   if (showSelectionMade) {
     selectionMadeWindow = new BrowserWindow({
+      webPreferences,
       frame: false,
       height: 250,
       show: false,
       transparent: true,
-      webPreferences: {
-        nodeIntegration: true
-      },
-      width: 500
+      width: 500,
     });
-    selectionMadeWindow.loadFile(path.join(__dirname, 'selection-made.html'));
+    void selectionMadeWindow.loadFile(
+      path.join(__dirname, 'selection-made.html')
+    );
   }
 
   mainWindow = new BrowserWindow({
+    webPreferences,
     frame: false,
-    height: 400,
+    height: 500,
     icon: path.join(__dirname, 'assets', 'speedy.ico'),
-    webPreferences: {
-      nodeIntegration: true
-    },
-    width: 500
+    width: 800,
   });
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
-  // mainWindow.webContents.openDevTools();
+  void mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  if (showDevTools) {
+    mainWindow.webContents.openDevTools();
+  }
+  const mainPosition = mainWindow.getBounds();
+  const activeScreen = screen.getDisplayNearestPoint({
+    x: mainPosition.x,
+    y: mainPosition.y,
+  });
+  mainWindow.setSize(
+    Math.min(activeScreen.bounds.width * 0.8, 1000),
+    Math.min(activeScreen.bounds.height * 0.8, 500)
+  );
 
-  mainWindow.on('close', event => {
+  mainWindow.on('close', (event) => {
     try {
       if (quitting) {
         mainWindow = null;
@@ -71,87 +117,109 @@ function createWindow() {
       console.error(error);
     }
   });
-}
+};
 
-function createAppMenu() {
+const createAppMenu = () => {
   const template = [
-    ...(isMac ? [{
-      label: app.getName(),
-      submenu: [
-        { role: 'about' },
-        { type: 'separator' },
-        { role: 'hide' },
-        { role: 'unhide' },
-        { type: 'separator' },
-        { role: 'quit' }
-      ]
-    }] : []),
+    ...(isMac
+      ? [
+          {
+            label: app.getName(),
+            submenu: [
+              { role: 'about' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' },
+            ],
+          },
+        ]
+      : []),
     {
       label: 'File',
-      submenu: [
-        isMac ? { role: 'close' } : { role: 'quit' }
-      ]
+      submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
+    },
+    {
+      label: 'Edit',
+      submenu: [{ role: 'cut' }, { role: 'copy' }, { role: 'paste' }],
     },
     {
       label: 'Window',
       submenu: [
         { role: 'forcereload', label: 'Refresh' },
         { role: 'minimize' },
-        { role: 'close' }
-      ]
+        { role: 'close' },
+      ],
     },
     {
       role: 'help',
       submenu: [
         {
           label: 'Learn More',
-          click() { shell.openExternal('https://github.com/fotijr/speedy-unicode'); }
-        }
-      ]
-    }
+          click: () => {
+            void shell.openExternal('https://github.com/fotijr/speedy-unicode');
+          },
+        },
+      ],
+    },
   ];
 
   const menu = Menu.buildFromTemplate(template as any);
   Menu.setApplicationMenu(menu);
-}
+};
 
-function createEditWindow(): Electron.BrowserWindow {
+const createEditWindow: () => Electron.BrowserWindow = () => {
   const editCharacterWindow = new BrowserWindow({
+    webPreferences,
     frame: true,
     height: 400,
     modal: true,
     show: false,
     title: 'Edit Character',
-    webPreferences: {
-      nodeIntegration: true
-    },
-    width: 375
+    width: 375,
   });
-  editCharacterWindow.loadFile(path.join(__dirname, 'edit-character.html'));
-  // editCharacterWindow.webContents.openDevTools();
+  void editCharacterWindow.loadFile(
+    path.join(__dirname, 'edit-character.html')
+  );
+  if (showDevTools) {
+    editCharacterWindow.webContents.openDevTools();
+  }
   return editCharacterWindow;
-}
+};
 
-function editCharacter(character: UnicodeCharacter) {
+const editCharacter = (character: UnicodeCharacter) => {
   const editWindow = createEditWindow();
   editWindow.webContents.once('dom-ready', () => {
-    editWindow.webContents.send(editCharacterChannel, character);
+    editWindow.webContents.send(IcpChannels.editCharacter, character);
     editWindow.show();
     showDockIcon();
   });
-}
+};
 
-function addCharacter() {
-  editCharacter({ name: '', value: '', number: '', lastSelected: 0, userDefined: true });
-}
+const addCharacter = () => {
+  editCharacter({
+    name: '',
+    value: '',
+    code: '',
+    lastSelected: 0,
+    userDefined: true,
+  });
+};
 
-ipcMain.on(editCharacterChannel, (event: any, character: UnicodeCharacter) => {
-  editCharacter(character);
-});
+ipcMain.on(
+  IcpChannels.editCharacter,
+  (event: any, character: UnicodeCharacter) => {
+    editCharacter(character);
+  }
+);
 
-ipcMain.on(saveCharacterChannel, (event: any, selection: UnicodeCharacter) => {
-  mainWindow.webContents.send(saveCharacterChannel, selection);
-});
+ipcMain.on(
+  IcpChannels.saveCharacter,
+  (event: any, selection: UnicodeCharacter) => {
+    mainWindow.webContents.send(IcpChannels.saveCharacter, selection);
+  }
+);
 
 if (showSelectionMade) {
   ipcMain.on('selection-made', (event: any, selection: UnicodeCharacter) => {
@@ -164,14 +232,14 @@ if (showSelectionMade) {
   });
 }
 
-function createTrayIcon() {
+const createTrayIcon = () => {
   try {
     tray = new Tray(path.join(__dirname, 'assets', 'speedy-22.png'));
-    const exitText = (isMac) ? 'Quit' : 'Exit';
+    const exitText = isMac ? 'Quit' : 'Exit';
     const contextMenu = Menu.buildFromTemplate([
       { label: 'Show Speedy Unicode', type: 'normal', click: showApp },
       { label: 'Add custom character', type: 'normal', click: addCharacter },
-      { label: exitText, type: 'normal', click: () => app.quit() }
+      { label: exitText, type: 'normal', click: () => app.quit() },
     ]);
     tray.setToolTip('Speedy Unicode');
     tray.setContextMenu(contextMenu);
@@ -179,7 +247,7 @@ function createTrayIcon() {
   } catch (error) {
     console.error('Error setting up tray icon', error);
   }
-}
+};
 
 app.on('ready', () => {
   createWindow();
@@ -195,17 +263,16 @@ app.on('window-all-closed', () => {
   }
 });
 
-function showDockIcon() {
+const showDockIcon = () => {
   if (isMac) {
-    app.dock.show();
+    void app.dock.show();
   }
-}
+};
 
-function showApp() {
+const showApp = () => {
   if (mainWindow === null) {
     createWindow();
   } else {
-    app.show();
     // toggling visible on all workspaces ensures speedy opens on the active desktop/monitor
     mainWindow.setVisibleOnAllWorkspaces(true);
     mainWindow.show();
@@ -213,6 +280,6 @@ function showApp() {
     mainWindow.setVisibleOnAllWorkspaces(false);
     showDockIcon();
   }
-}
+};
 
 app.on('activate', showApp);

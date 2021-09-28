@@ -5,3 +5,7 @@ src/**/*.js
 src/**/*.map
 
 .DS_Store
+
+
+# sticking with yarn, so ignore npm lock file
+package-lock.json

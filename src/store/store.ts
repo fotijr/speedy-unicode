@@ -1,14 +1,14 @@
-import { app, remote } from 'electron';
+import { app } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import { StoreData } from '../models';
 
-class Store {
+export class Store {
     private data: StoreData;
     private path: string;
 
     constructor(storeName: string) {
-        const userDataPath = (app || remote.app).getPath('userData');
+        const userDataPath = app.getPath('userData');
         this.path = path.join(userDataPath, `${storeName}.json`);
         this.data = this.loadData(this.path);
     }
@@ -18,6 +18,6 @@ class Store {
     }
 
     private loadData(file: string): StoreData {
-        return JSON.parse(fs.readFileSync(file, 'utf-8') as string);
+        return JSON.parse(fs.readFileSync(file, 'utf-8')) as StoreData;
     }
 }

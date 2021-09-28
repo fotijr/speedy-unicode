@@ -1,4 +1,4 @@
-import { app, remote } from 'electron';
+import { app } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import { UnicodeCharacter } from '../models';
@@ -7,15 +7,15 @@ export class UnicodeStore {
     private userDefinedCharactersPath: string;
     private readonly standardUnicodePath = path.join(__dirname, '..', 'assets', 'unicode-data.txt');
     private userDefinedCharacters: UnicodeCharacter[] = [
-        { value: `¯\\_(ツ)_/¯`, name: 'Shrug', number: 'ascii-shrug', lastSelected: 0, userDefined: true },
+        { value: `¯\\_(ツ)_/¯`, name: 'Shrug', code: 'ascii-shrug', lastSelected: 0, userDefined: true },
         {
             alias: 'LOD', lastSelected: 0, name: 'Look of Disapproval',
-            number: 'ascii-lod', userDefined: true, value: 'ಠ_ಠ'
+            code: 'ascii-lod', userDefined: true, value: 'ಠ_ಠ'
         }
     ];
     constructor() {
         const fileName = 'user-characters.json';
-        const userDataPath = (app || remote.app).getPath('userData');
+        const userDataPath = app.getPath('userData');
         this.userDefinedCharactersPath = path.join(userDataPath, fileName);
     }
 
@@ -24,7 +24,7 @@ export class UnicodeStore {
             const standardCharacters = await this.loadStandardCharacters();
             const userDefinedCharacters = await this.loadUserDefinedCharacters();
             userDefinedCharacters.forEach(c => {
-                const existingIndex = standardCharacters.findIndex(sc => sc.number === c.number);
+                const existingIndex = standardCharacters.findIndex(sc => sc.code === c.code);
                 if (existingIndex >= 0) {
                     // standard character is overridden by user defined chars so delete it before combining
                     standardCharacters.splice(existingIndex, 1);
@@ -41,7 +41,7 @@ export class UnicodeStore {
     }
 
     public async saveUserDefinedCharacter(character: UnicodeCharacter) {
-        const existingIndex = this.userDefinedCharacters.findIndex(c => c.number === character.number);
+        const existingIndex = this.userDefinedCharacters.findIndex(c => c.code === character.code);
         if (existingIndex >= 0) {
             this.userDefinedCharacters[existingIndex] = character;
         } else {
@@ -51,7 +51,7 @@ export class UnicodeStore {
     }
 
     public async deleteUserDefinedCharacter(character: UnicodeCharacter) {
-        const existingIndex = this.userDefinedCharacters.findIndex(c => c.number === character.number);
+        const existingIndex = this.userDefinedCharacters.findIndex(c => c.code === character.code);
         if (existingIndex >= 0) {
             this.userDefinedCharacters.splice(existingIndex, 1);
             await this.saveUserDefinedFile();
@@ -64,7 +64,7 @@ export class UnicodeStore {
     }
 
     private async loadStandardCharacters(): Promise<UnicodeCharacter[]> {
-        const unicodeData = await fs.promises.readFile(this.standardUnicodePath, 'utf-8') as string;
+        const unicodeData = await fs.promises.readFile(this.standardUnicodePath, 'utf-8');
         const fileLines = unicodeData.split(/\r?\n/);
         const characters: UnicodeCharacter[] = [];
         fileLines.forEach(line => {
@@ -77,7 +77,7 @@ export class UnicodeStore {
                 characters.push({
                     lastSelected: 0,
                     name: this.formatName(properties[1]),
-                    number: properties[0],
+                    code: properties[0],
                     value: String.fromCodePoint(parseInt(properties[0], 16))
                 });
             } catch (error) {
@@ -89,8 +89,8 @@ export class UnicodeStore {
 
     private async loadUserDefinedCharacters(): Promise<UnicodeCharacter[]> {
         try {
-            const fileContents = await fs.promises.readFile(this.userDefinedCharactersPath, 'utf-8') as string;
-            this.userDefinedCharacters = JSON.parse(fileContents);
+            const fileContents = await fs.promises.readFile(this.userDefinedCharactersPath, 'utf-8');
+            this.userDefinedCharacters = JSON.parse(fileContents) as UnicodeCharacter[];
         } catch (error) {
             console.error('Error loading user-defined unicode characters', error);
         }

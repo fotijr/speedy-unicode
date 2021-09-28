@@ -1,12 +1,18 @@
 {
   "compilerOptions": {
-    "lib": ["es2018", "dom"],
+    "lib": [
+      "es2018",
+      "dom"
+    ],
     "module": "commonjs",
+    "moduleResolution": "node",
     "noImplicitAny": true,
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "*": ["node_modules/*"]
+      "*": [
+        "node_modules/*"
+      ]
     }
   },
   "include": [

@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron';
-import { editCharacterChannel, saveCharacterChannel } from './constants';
+import { IcpChannels } from './constants';
 import { UnicodeCharacter } from './models';
 
 let currentCharacter: UnicodeCharacter;
@@ -7,11 +7,11 @@ const valueInput = document.getElementById('char-value') as HTMLInputElement;
 const nameInput = document.getElementById('char-name') as HTMLInputElement;
 const aliasInput = document.getElementById('char-alias') as HTMLInputElement;
 
-ipcRenderer.on(editCharacterChannel, (event: any, selection: UnicodeCharacter) => {
+ipcRenderer.on(IcpChannels.editCharacter, (event: any, selection: UnicodeCharacter) => {
     showSelection(selection);
 });
 
-document.getElementById('cancel').onclick = (event: MouseEvent) => {
+document.getElementById('cancel').onclick = () => {
     window.close();
 };
 
@@ -29,17 +29,17 @@ document.getElementById('edit-form').onsubmit = (event: Event) => {
         currentCharacter.name = nameInput.value;
         currentCharacter.value = valueInput.value;
 
-        if (!currentCharacter.number) {
+        if (!currentCharacter.code) {
             // number has not yet been generated, create one now
-            currentCharacter.number = `user-${currentCharacter.name}-${Math.random().toString(36).substr(2, 9)}`;
+            currentCharacter.code = `user-${currentCharacter.name}-${Math.random().toString(36).substr(2, 9)}`;
         }
     }
     currentCharacter.alias = aliasInput.value;
-    ipcRenderer.send(saveCharacterChannel, currentCharacter);
+    ipcRenderer.send(IcpChannels.saveCharacter, currentCharacter);
     window.close();
 };
 
-function showSelection(selection: UnicodeCharacter) {
+const showSelection = (selection: UnicodeCharacter) => {
     currentCharacter = selection;
     valueInput.value = selection.value;
     nameInput.value = selection.name;
