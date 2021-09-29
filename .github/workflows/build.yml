@@ -22,3 +22,8 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: yarn dist
+    - name: Upload release artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: release
+        path: release/speedy-unicode*
